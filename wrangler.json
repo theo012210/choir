@@ -1,6 +1,9 @@
 {
 	"name": "choir",
 	"compatibility_date": "2025-11-28",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
 	"assets": {
 		"directory": "./dist"
 	},

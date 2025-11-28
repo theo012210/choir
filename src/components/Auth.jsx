@@ -24,7 +24,16 @@ export default function Auth({ onLogin }) {
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      let data;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        // If response is not JSON (e.g. 404 HTML or 500 text), read as text
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        throw new Error(`Server error (${response.status}): Please check console for details.`);
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Authentication failed');
