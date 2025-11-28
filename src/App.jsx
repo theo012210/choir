@@ -317,6 +317,7 @@ function App() {
           </div>
         </section>
       </main>
+      <Calendar plans={visiblePlans} />
     </div>
   );
 }
@@ -363,6 +364,110 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete }) {
         )}
       </div>
     </div>
+  );
+}
+
+function Calendar({ plans }) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  const getDaysInMonth = (year, month) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (year, month) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDay = getFirstDayOfMonth(year, month);
+
+  const days = [];
+  for (let i = 0; i < firstDay; i++) {
+    days.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(i);
+  }
+
+  const getDayStatus = (day) => {
+    if (!day) return null;
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dayPlans = plans.filter(p => p.date === dateStr);
+    
+    const hasPlanned = dayPlans.some(p => p.status === 'Planned');
+    const hasDone = dayPlans.some(p => p.status === 'Done');
+
+    if (hasPlanned && hasDone) return 'both';
+    if (hasPlanned) return 'planned';
+    if (hasDone) return 'done';
+    return null;
+  };
+
+  const prevMonth = () => {
+    setCurrentDate(new Date(year, month - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1));
+  };
+
+  return (
+    <section className="mt-12 bg-white p-6 rounded-xl shadow-md">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+          <span>🗓️</span> Monthly Schedule
+        </h2>
+        <div className="flex items-center gap-4">
+          <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-full transition">◀</button>
+          <span className="text-lg font-medium min-w-[140px] text-center">
+            {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+          </span>
+          <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-full transition">▶</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-2 text-center mb-2">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+          <div key={d} className="text-sm font-bold text-gray-400 uppercase tracking-wider">{d}</div>
+        ))}
+      </div>
+      
+      <div className="grid grid-cols-7 gap-2">
+        {days.map((day, idx) => {
+          const status = getDayStatus(day);
+          let bgClass = 'bg-gray-50 text-gray-700';
+          if (status === 'planned') bgClass = 'bg-green-200 text-green-900 font-medium ring-2 ring-green-100';
+          if (status === 'done') bgClass = 'bg-orange-200 text-orange-900 font-medium ring-2 ring-orange-100';
+          if (status === 'both') bgClass = 'bg-gradient-to-br from-orange-200 to-green-200 text-gray-900 font-medium';
+
+          return (
+            <div 
+              key={idx} 
+              className={`
+                h-14 md:h-24 flex flex-col items-start justify-start p-2 rounded-lg text-sm transition-all
+                ${day ? bgClass : 'bg-transparent'} 
+                ${day && !status ? 'hover:bg-gray-100' : ''}
+              `}
+            >
+              {day && <span className="text-xs opacity-70">{day}</span>}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 flex gap-6 text-sm text-gray-600 justify-center border-t pt-4">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-green-200 rounded ring-2 ring-green-100"></div>
+          <span>Coming Plans</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-orange-200 rounded ring-2 ring-orange-100"></div>
+          <span>What We Did</span>
+        </div>
+      </div>
+    </section>
   );
 }
 
