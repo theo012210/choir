@@ -79,7 +79,7 @@ function App() {
         const response = await fetch('/api/plans', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newPlan),
+          body: JSON.stringify({ ...newPlan, createdBy: user.name }),
         });
 
         if (response.ok) {
@@ -346,6 +346,9 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete }) {
         </div>
       </div>
       <p className="text-gray-600">{plan.description}</p>
+      {plan.createdBy && (
+        <p className="text-xs text-gray-400 mt-1">Added by: {plan.createdBy}</p>
+      )}
       <div className="mt-3 flex justify-between items-center">
         <div className="flex gap-2 flex-wrap">
           {plan.visibleTo.map(role => (

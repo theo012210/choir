@@ -21,11 +21,11 @@ export async function onRequestGet(context) {
 export async function onRequestPost(context) {
   const { request, env } = context;
   const body = await request.json();
-  const { title, date, description, status, visibleTo } = body;
+  const { title, date, description, status, visibleTo, createdBy } = body;
 
   try {
-    const result = await env.DB.prepare('INSERT INTO plans (title, date, description, status, visibleTo) VALUES (?, ?, ?, ?, ?)')
-      .bind(title, date, description, status, JSON.stringify(visibleTo))
+    const result = await env.DB.prepare('INSERT INTO plans (title, date, description, status, visibleTo, createdBy) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(title, date, description, status, JSON.stringify(visibleTo), createdBy)
       .run();
 
     const newPlan = {

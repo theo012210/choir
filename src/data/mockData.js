@@ -13,6 +13,7 @@ export const PLANS = [
     status: 'Done',
     description: 'Standard 15-minute warm-up focusing on breath control.',
     visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER],
+    createdBy: 'Teacher',
   },
   {
     id: 2,
@@ -21,6 +22,7 @@ export const PLANS = [
     status: 'Done',
     description: 'Focus on the bridge of "O Magnum Mysterium".',
     visibleTo: [ROLES.TEACHER, ROLES.PART_LEADER],
+    createdBy: 'Teacher',
   },
   {
     id: 3,
@@ -29,6 +31,7 @@ export const PLANS = [
     status: 'Planned',
     description: 'Run through of the Christmas concert repertoire.',
     visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER],
+    createdBy: 'Teacher',
   },
   {
     id: 4,
@@ -37,6 +40,7 @@ export const PLANS = [
     status: 'Planned',
     description: 'Discussing logistics for the upcoming tour.',
     visibleTo: [ROLES.TEACHER, ROLES.LEADER],
+    createdBy: 'Teacher',
   },
   {
     id: 5,
@@ -45,5 +49,6 @@ export const PLANS = [
     status: 'Planned',
     description: 'Learning the new piece "Stars".',
     visibleTo: [ROLES.TEACHER, ROLES.PART_LEADER],
+    createdBy: 'Teacher',
   },
 ];
