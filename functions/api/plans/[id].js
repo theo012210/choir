@@ -20,3 +20,24 @@ export async function onRequestPut(context) {
     });
   }
 }
+
+export async function onRequestDelete(context) {
+  const { env, params } = context;
+  const id = params.id;
+
+  try {
+    await env.DB.prepare('DELETE FROM plans WHERE id = ?')
+      .bind(id)
+      .run();
+
+    return new Response(JSON.stringify({ message: 'Plan deleted successfully' }), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e.message }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}

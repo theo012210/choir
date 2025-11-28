@@ -152,6 +152,22 @@ function App() {
     }
   };
 
+  const handleDeletePlan = async (planId) => {
+    if (!window.confirm('Are you sure you want to delete this plan?')) return;
+
+    try {
+      const response = await fetch(`/api/plans/${planId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setPlans(plans.filter(plan => plan.id !== planId));
+      }
+    } catch (error) {
+      console.error('Failed to delete plan:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-8 font-sans text-gray-900">
       <header className="mb-10 flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-xl shadow-md">
@@ -272,6 +288,7 @@ function App() {
                   plan={plan} 
                   type="done" 
                   onEdit={handleEditPlan}
+                  onDelete={handleDeletePlan}
                 />
               ))
             )}
@@ -285,7 +302,6 @@ function App() {
           <div className="space-y-4">
             {upcomingPlans.length === 0 ? (
               <p className="text-gray-500 italic">No upcoming plans visible.</p>
-            ) : (
               upcomingPlans.map(plan => (
                 <PlanCard 
                   key={plan.id} 
@@ -293,7 +309,9 @@ function App() {
                   type="upcoming" 
                   onMarkDone={handleMarkDone}
                   onEdit={handleEditPlan}
+                  onDelete={handleDeletePlan}
                 />
+              ))/>
               ))
             )}
           </div>
@@ -302,8 +320,7 @@ function App() {
     </div>
   );
 }
-
-function PlanCard({ plan, type, onMarkDone, onEdit }) {
+function PlanCard({ plan, type, onMarkDone, onEdit, onDelete }) {
   const isDone = type === 'done';
   return (
     <div className={`bg-white p-5 rounded-lg shadow-sm border-l-4 ${isDone ? 'border-emerald-400' : 'border-blue-400'} hover:shadow-md transition-shadow`}>
@@ -318,7 +335,15 @@ function PlanCard({ plan, type, onMarkDone, onEdit }) {
           >
             ✏️
           </button>
+          <button 
+            onClick={() => onDelete(plan.id)}
+            className="text-gray-400 hover:text-red-600 transition"
+            title="Delete"
+          >
+            🗑️
+          </button>
         </div>
+      </div>v>
       </div>
       <p className="text-gray-600">{plan.description}</p>
       <div className="mt-3 flex justify-between items-center">
