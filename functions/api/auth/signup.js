@@ -11,7 +11,10 @@ export async function onRequestPost(context) {
       .first();
 
     if (existingUser) {
-      return new Response(JSON.stringify({ error: 'User already exists' }), { status: 409 });
+      return new Response(JSON.stringify({ error: 'User already exists' }), { 
+        status: 409,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -28,8 +31,14 @@ export async function onRequestPost(context) {
       role
     };
 
-    return new Response(JSON.stringify(newUser), { status: 201 });
+    return new Response(JSON.stringify(newUser), { 
+      status: 201,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: e.message }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

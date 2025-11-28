@@ -9,8 +9,14 @@ export async function onRequestPut(context) {
       .bind(title, date, description, status, JSON.stringify(visibleTo), id)
       .run();
 
-    return new Response(JSON.stringify({ id, ...body }), { status: 200 });
+    return new Response(JSON.stringify({ id, ...body }), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: e.message }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

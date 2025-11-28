@@ -6,9 +6,15 @@ export async function onRequestGet(context) {
       ...plan,
       visibleTo: JSON.parse(plan.visibleTo)
     }));
-    return new Response(JSON.stringify(plans), { status: 200 });
+    return new Response(JSON.stringify(plans), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: e.message }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 
@@ -27,8 +33,14 @@ export async function onRequestPost(context) {
       ...body
     };
 
-    return new Response(JSON.stringify(newPlan), { status: 201 });
+    return new Response(JSON.stringify(newPlan), { 
+      status: 201,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: e.message }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
