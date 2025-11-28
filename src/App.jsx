@@ -1,0 +1,294 @@
+import { useState, useEffect } from 'react';
+import { ROLES, PLANS } from './data/mockData';
+import Auth from './components/Auth';
+import './App.css';
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [currentRole, setCurrentRole] = useState(ROLES.MEMBER);
+  const [plans, setPlans] = useState(PLANS);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [newPlan, setNewPlan] = useState({
+    title: '',
+    date: '',
+    description: '',
+    status: 'Planned',
+    visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER]
+  });
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('choir_user_session');
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      setCurrentRole(parsedUser.role);
+    }
+  }, []);
+
+  const handleLogin = (loggedInUser) => {
+    setUser(loggedInUser);
+    setCurrentRole(loggedInUser.role);
+    localStorage.setItem('choir_user_session', JSON.stringify(loggedInUser));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('choir_user_session');
+  };
+
+  if (!user) {
+    return <Auth onLogin={handleLogin} />;
+  }
+
+  const visiblePlans = plans.filter(plan => plan.visibleTo.includes(currentRole));
+  const donePlans = visiblePlans.filter(plan => plan.status === 'Done');
+  const upcomingPlans = visiblePlans.filter(plan => plan.status === 'Planned');
+
+  const handleSavePlan = (e) => {
+    e.preventDefault();
+    if (editingId) {
+      setPlans(plans.map(p => p.id === editingId ? { ...newPlan, id: editingId } : p));
+      setEditingId(null);
+    } else {
+      const planToAdd = {
+        ...newPlan,
+        id: plans.length + 1,
+      };
+      setPlans([...plans, planToAdd]);
+    }
+    setIsFormOpen(false);
+    setNewPlan({
+      title: '',
+      date: '',
+      description: '',
+      status: 'Planned',
+      visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER]
+    });
+  };
+
+  const handleEditPlan = (plan) => {
+    setNewPlan(plan);
+    setEditingId(plan.id);
+    setIsFormOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setIsFormOpen(false);
+    setEditingId(null);
+    setNewPlan({
+      title: '',
+      date: '',
+      description: '',
+      status: 'Planned',
+      visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER]
+    });
+  };
+
+  const handleRoleChange = (role) => {
+    setNewPlan(prev => {
+      const newVisibleTo = prev.visibleTo.includes(role)
+        ? prev.visibleTo.filter(r => r !== role)
+        : [...prev.visibleTo, role];
+      return { ...prev, visibleTo: newVisibleTo };
+    });
+  };
+
+  const handleMarkDone = (planId) => {
+    setPlans(plans.map(plan => 
+      plan.id === planId ? { ...plan, status: 'Done' } : plan
+    ));
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-8 font-sans text-gray-900">
+      <header className="mb-10 flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-xl shadow-md">
+        <div>
+          <h1 className="text-3xl font-bold text-indigo-600">Choir Learning Plan</h1>
+          <p className="text-gray-500 mt-1">Welcome, {user.name} ({user.role})</p>
+        </div>
+        <div className="mt-4 md:mt-0 flex items-center gap-3">
+          <button 
+            onClick={isFormOpen ? handleCancelEdit : () => setIsFormOpen(true)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+          >
+            {isFormOpen ? 'Close Form' : 'Add Plan'}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+      {isFormOpen && (
+        <div className="mb-10 bg-white p-6 rounded-xl shadow-md animate-fade-in">
+          <h2 className="text-xl font-bold mb-4 text-gray-800">{editingId ? 'Edit Plan' : 'Add New Plan'}</h2>
+          <form onSubmit={handleSavePlan} className="grid gap-4 md:grid-cols-2">
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <input
+                type="text"
+                required
+                value={newPlan.title}
+                onChange={e => setNewPlan({...newPlan, title: e.target.value})}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <input
+                type="date"
+                required
+                value={newPlan.date}
+                onChange={e => setNewPlan({...newPlan, date: e.target.value})}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea
+                required
+                value={newPlan.description}
+                onChange={e => setNewPlan({...newPlan, description: e.target.value})}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                rows="3"
+              />
+            </div>
+            <div className="col-span-2 md:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                value={newPlan.status}
+                onChange={e => setNewPlan({...newPlan, status: e.target.value})}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="Planned">Planned</option>
+                <option value="Done">Done</option>
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Visible To</label>
+              <div className="flex flex-wrap gap-3">
+                {Object.values(ROLES).map(role => (
+                  <label key={role} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newPlan.visibleTo.includes(role)}
+                      onChange={() => handleRoleChange(role)}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-gray-700">{role}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="col-span-2 mt-2 flex gap-3">
+              <button
+                type="submit"
+                className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition font-medium"
+              >
+                {editingId ? 'Update Plan' : 'Save Plan'}
+              </button>
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition font-medium"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      )}
+
+      <main className="grid md:grid-cols-2 gap-8">
+        <section>
+          <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-emerald-600">
+            <span>✓</span> What We Did
+          </h2>
+          <div className="space-y-4">
+            {donePlans.length === 0 ? (
+              <p className="text-gray-500 italic">No completed activities visible.</p>
+            ) : (
+              donePlans.map(plan => (
+                <PlanCard 
+                  key={plan.id} 
+                  plan={plan} 
+                  type="done" 
+                  onEdit={handleEditPlan}
+                />
+              ))
+            )}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-blue-600">
+            <span>📅</span> Coming Plans
+          </h2>
+          <div className="space-y-4">
+            {upcomingPlans.length === 0 ? (
+              <p className="text-gray-500 italic">No upcoming plans visible.</p>
+            ) : (
+              upcomingPlans.map(plan => (
+                <PlanCard 
+                  key={plan.id} 
+                  plan={plan} 
+                  type="upcoming" 
+                  onMarkDone={handleMarkDone}
+                  onEdit={handleEditPlan}
+                />
+              ))
+            )}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+function PlanCard({ plan, type, onMarkDone, onEdit }) {
+  const isDone = type === 'done';
+  return (
+    <div className={`bg-white p-5 rounded-lg shadow-sm border-l-4 ${isDone ? 'border-emerald-400' : 'border-blue-400'} hover:shadow-md transition-shadow`}>
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="text-xl font-bold text-gray-800">{plan.title}</h3>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">{plan.date}</span>
+          <button 
+            onClick={() => onEdit(plan)}
+            className="text-gray-400 hover:text-indigo-600 transition"
+            title="Edit"
+          >
+            ✏️
+          </button>
+        </div>
+      </div>
+      <p className="text-gray-600">{plan.description}</p>
+      <div className="mt-3 flex justify-between items-center">
+        <div className="flex gap-2 flex-wrap">
+          {plan.visibleTo.map(role => (
+            <span key={role} className="text-xs font-medium px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
+              {role}
+            </span>
+          ))}
+        </div>
+        {!isDone && (
+          <button
+            onClick={() => onMarkDone(plan.id)}
+            className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition"
+          >
+            Mark Done
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;

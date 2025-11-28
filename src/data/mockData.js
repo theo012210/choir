@@ -1,0 +1,49 @@
+export const ROLES = {
+  TEACHER: 'Teacher',
+  LEADER: 'Leader',
+  PART_LEADER: 'Part Leader',
+  MEMBER: 'Member',
+};
+
+export const PLANS = [
+  {
+    id: 1,
+    title: 'Vocal Warm-up Routine',
+    date: '2023-10-25',
+    status: 'Done',
+    description: 'Standard 15-minute warm-up focusing on breath control.',
+    visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER],
+  },
+  {
+    id: 2,
+    title: 'Sectionals: Soprano & Alto',
+    date: '2023-10-27',
+    status: 'Done',
+    description: 'Focus on the bridge of "O Magnum Mysterium".',
+    visibleTo: [ROLES.TEACHER, ROLES.PART_LEADER],
+  },
+  {
+    id: 3,
+    title: 'Full Choir Rehearsal',
+    date: '2023-11-01',
+    status: 'Planned',
+    description: 'Run through of the Christmas concert repertoire.',
+    visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER],
+  },
+  {
+    id: 4,
+    title: 'Leadership Meeting',
+    date: '2023-11-05',
+    status: 'Planned',
+    description: 'Discussing logistics for the upcoming tour.',
+    visibleTo: [ROLES.TEACHER, ROLES.LEADER],
+  },
+  {
+    id: 5,
+    title: 'Tenor Sectional',
+    date: '2023-11-08',
+    status: 'Planned',
+    description: 'Learning the new piece "Stars".',
+    visibleTo: [ROLES.TEACHER, ROLES.PART_LEADER],
+  },
+];
