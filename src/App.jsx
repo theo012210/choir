@@ -302,6 +302,7 @@ function App() {
           <div className="space-y-4">
             {upcomingPlans.length === 0 ? (
               <p className="text-gray-500 italic">No upcoming plans visible.</p>
+            ) : (
               upcomingPlans.map(plan => (
                 <PlanCard 
                   key={plan.id} 
@@ -311,7 +312,6 @@ function App() {
                   onEdit={handleEditPlan}
                   onDelete={handleDeletePlan}
                 />
-              ))/>
               ))
             )}
           </div>
@@ -343,7 +343,6 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete }) {
             🗑️
           </button>
         </div>
-      </div>v>
       </div>
       <p className="text-gray-600">{plan.description}</p>
       <div className="mt-3 flex justify-between items-center">
