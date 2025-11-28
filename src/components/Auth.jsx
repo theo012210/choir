@@ -11,27 +11,28 @@ export default function Auth({ onLogin }) {
   });
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    const users = JSON.parse(localStorage.getItem('choir_users') || '[]');
+    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
+    
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
 
-    if (isLogin) {
-      const user = users.find(u => u.email === formData.email && u.password === formData.password);
-      if (user) {
-        onLogin(user);
-      } else {
-        setError('Invalid email or password');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Authentication failed');
       }
-    } else {
-      if (users.find(u => u.email === formData.email)) {
-        setError('User already exists');
-        return;
-      }
-      const newUser = { ...formData, id: Date.now() };
-      localStorage.setItem('choir_users', JSON.stringify([...users, newUser]));
-      onLogin(newUser);
+
+      onLogin(data);
+    } catch (err) {
+      setError(err.message);
     }
   };
 

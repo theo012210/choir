@@ -24,12 +24,26 @@ function App() {
       setUser(parsedUser);
       setCurrentRole(parsedUser.role);
     }
+    fetchPlans();
   }, []);
+
+  const fetchPlans = async () => {
+    try {
+      const response = await fetch('/api/plans');
+      if (response.ok) {
+        const data = await response.json();
+        setPlans(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch plans:', error);
+    }
+  };
 
   const handleLogin = (loggedInUser) => {
     setUser(loggedInUser);
     setCurrentRole(loggedInUser.role);
     localStorage.setItem('choir_user_session', JSON.stringify(loggedInUser));
+    fetchPlans();
   };
 
   const handleLogout = () => {
@@ -45,26 +59,46 @@ function App() {
   const donePlans = visiblePlans.filter(plan => plan.status === 'Done');
   const upcomingPlans = visiblePlans.filter(plan => plan.status === 'Planned');
 
-  const handleSavePlan = (e) => {
+  const handleSavePlan = async (e) => {
     e.preventDefault();
-    if (editingId) {
-      setPlans(plans.map(p => p.id === editingId ? { ...newPlan, id: editingId } : p));
-      setEditingId(null);
-    } else {
-      const planToAdd = {
-        ...newPlan,
-        id: plans.length + 1,
-      };
-      setPlans([...plans, planToAdd]);
+    
+    try {
+      if (editingId) {
+        const response = await fetch(`/api/plans/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newPlan),
+        });
+        
+        if (response.ok) {
+          const updatedPlan = await response.json();
+          setPlans(plans.map(p => p.id === editingId ? updatedPlan : p));
+          setEditingId(null);
+        }
+      } else {
+        const response = await fetch('/api/plans', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newPlan),
+        });
+
+        if (response.ok) {
+          const createdPlan = await response.json();
+          setPlans([...plans, createdPlan]);
+        }
+      }
+      
+      setIsFormOpen(false);
+      setNewPlan({
+        title: '',
+        date: '',
+        description: '',
+        status: 'Planned',
+        visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER]
+      });
+    } catch (error) {
+      console.error('Failed to save plan:', error);
     }
-    setIsFormOpen(false);
-    setNewPlan({
-      title: '',
-      date: '',
-      description: '',
-      status: 'Planned',
-      visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER]
-    });
   };
 
   const handleEditPlan = (plan) => {
@@ -95,10 +129,27 @@ function App() {
     });
   };
 
-  const handleMarkDone = (planId) => {
-    setPlans(plans.map(plan => 
-      plan.id === planId ? { ...plan, status: 'Done' } : plan
-    ));
+  const handleMarkDone = async (planId) => {
+    const planToUpdate = plans.find(p => p.id === planId);
+    if (!planToUpdate) return;
+
+    const updatedPlanData = { ...planToUpdate, status: 'Done' };
+
+    try {
+      const response = await fetch(`/api/plans/${planId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPlanData),
+      });
+
+      if (response.ok) {
+        setPlans(plans.map(plan => 
+          plan.id === planId ? { ...plan, status: 'Done' } : plan
+        ));
+      }
+    } catch (error) {
+      console.error('Failed to mark plan as done:', error);
+    }
   };
 
   return (
