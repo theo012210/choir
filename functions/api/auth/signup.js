@@ -1,3 +1,5 @@
+import bcrypt from 'bcryptjs';
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   const body = await request.json();
@@ -12,8 +14,11 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: 'User already exists' }), { status: 409 });
     }
 
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const result = await env.DB.prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)')
-      .bind(name, email, password, role)
+      .bind(name, email, hashedPassword, role)
       .run();
 
     const newUser = {
