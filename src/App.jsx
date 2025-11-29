@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { ROLES, PLANS } from './data/mockData';
 import Auth from './components/Auth';
+import SessionPlanner from './components/SessionPlanner';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [currentRole, setCurrentRole] = useState(ROLES.MEMBER);
   const [plans, setPlans] = useState(PLANS);
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'planner'
+  const [selectedDate, setSelectedDate] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -220,6 +223,17 @@ function App() {
     }
   };
 
+  const handleDateClick = (dateStr) => {
+    setSelectedDate(dateStr);
+    setCurrentView('planner');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBackToDashboard = () => {
+    setCurrentView('dashboard');
+    setSelectedDate(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-8 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-200">
       <header className="mb-10 flex flex-col md:flex-row justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md transition-colors duration-200">
@@ -314,133 +328,139 @@ function App() {
         </div>
       )}
 
-      {isFormOpen && (
-        <div className="mb-10 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md animate-fade-in transition-colors duration-200">
-          <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">{editingId ? 'Edit Plan' : 'Add New Plan'}</h2>
-          <form onSubmit={handleSavePlan} className="grid gap-4 md:grid-cols-2">
-            <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-              <input
-                type="text"
-                required
-                value={newPlan.title}
-                onChange={e => setNewPlan({...newPlan, title: e.target.value})}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-              />
+      {currentView === 'planner' ? (
+        <SessionPlanner date={selectedDate} onBack={handleBackToDashboard} />
+      ) : (
+        <>
+          {isFormOpen && (
+            <div className="mb-10 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md animate-fade-in transition-colors duration-200">
+              <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">{editingId ? 'Edit Plan' : 'Add New Plan'}</h2>
+              <form onSubmit={handleSavePlan} className="grid gap-4 md:grid-cols-2">
+                <div className="col-span-2 md:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={newPlan.title}
+                    onChange={e => setNewPlan({...newPlan, title: e.target.value})}
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+                <div className="col-span-2 md:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={newPlan.date}
+                    onChange={e => setNewPlan({...newPlan, date: e.target.value})}
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                  <textarea
+                    required
+                    value={newPlan.description}
+                    onChange={e => setNewPlan({...newPlan, description: e.target.value})}
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    rows="3"
+                  />
+                </div>
+                <div className="col-span-2 md:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                  <select
+                    value={newPlan.status}
+                    onChange={e => setNewPlan({...newPlan, status: e.target.value})}
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="Planned">Planned</option>
+                    <option value="Done">Done</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Visible To</label>
+                  <div className="flex flex-wrap gap-3">
+                    {Object.values(ROLES).map(role => (
+                      <label key={role} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newPlan.visibleTo.includes(role)}
+                          onChange={() => handleRoleChange(role)}
+                          className="rounded text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{role}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="col-span-2 mt-2 flex gap-3">
+                  <button
+                    type="submit"
+                    className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition font-medium"
+                  >
+                    {editingId ? 'Update Plan' : 'Save Plan'}
+                  </button>
+                  {editingId && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition font-medium"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
             </div>
-            <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-              <input
-                type="date"
-                required
-                value={newPlan.date}
-                onChange={e => setNewPlan({...newPlan, date: e.target.value})}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-              <textarea
-                required
-                value={newPlan.description}
-                onChange={e => setNewPlan({...newPlan, description: e.target.value})}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                rows="3"
-              />
-            </div>
-            <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-              <select
-                value={newPlan.status}
-                onChange={e => setNewPlan({...newPlan, status: e.target.value})}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="Planned">Planned</option>
-                <option value="Done">Done</option>
-              </select>
-            </div>
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Visible To</label>
-              <div className="flex flex-wrap gap-3">
-                {Object.values(ROLES).map(role => (
-                  <label key={role} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={newPlan.visibleTo.includes(role)}
-                      onChange={() => handleRoleChange(role)}
-                      className="rounded text-indigo-600 focus:ring-indigo-500"
+          )}
+
+          <main className="grid md:grid-cols-2 gap-8">
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-emerald-600">
+                <span>✓</span> What We Did
+              </h2>
+              <div className="space-y-4">
+                {donePlans.length === 0 ? (
+                  <p className="text-gray-500 italic">No completed activities visible.</p>
+                ) : (
+                  donePlans.map(plan => (
+                    <PlanCard 
+                      key={plan.id} 
+                      plan={plan} 
+                      type="done" 
+                      onEdit={handleEditPlan}
+                      onDelete={handleDeletePlan}
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{role}</span>
-                  </label>
-                ))}
+                  ))
+                )}
               </div>
-            </div>
-            <div className="col-span-2 mt-2 flex gap-3">
-              <button
-                type="submit"
-                className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition font-medium"
-              >
-                {editingId ? 'Update Plan' : 'Save Plan'}
-              </button>
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={handleCancelEdit}
-                  className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition font-medium"
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-blue-600">
+                <span>📅</span> Coming Plans
+              </h2>
+              <div className="space-y-4">
+                {upcomingPlans.length === 0 ? (
+                  <p className="text-gray-500 italic">No upcoming plans visible.</p>
+                ) : (
+                  upcomingPlans.map(plan => (
+                    <PlanCard 
+                      key={plan.id} 
+                      plan={plan} 
+                      type="upcoming" 
+                      onMarkDone={handleMarkDone}
+                      onEdit={handleEditPlan}
+                      onDelete={handleDeletePlan}
+                    />
+                  ))
+                )}
+              </div>
+            </section>
+          </main>
+          <Calendar plans={visiblePlans} onDateClick={handleDateClick} />
+        </>
       )}
-
-      <main className="grid md:grid-cols-2 gap-8">
-        <section>
-          <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-emerald-600">
-            <span>✓</span> What We Did
-          </h2>
-          <div className="space-y-4">
-            {donePlans.length === 0 ? (
-              <p className="text-gray-500 italic">No completed activities visible.</p>
-            ) : (
-              donePlans.map(plan => (
-                <PlanCard 
-                  key={plan.id} 
-                  plan={plan} 
-                  type="done" 
-                  onEdit={handleEditPlan}
-                  onDelete={handleDeletePlan}
-                />
-              ))
-            )}
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-blue-600">
-            <span>📅</span> Coming Plans
-          </h2>
-          <div className="space-y-4">
-            {upcomingPlans.length === 0 ? (
-              <p className="text-gray-500 italic">No upcoming plans visible.</p>
-            ) : (
-              upcomingPlans.map(plan => (
-                <PlanCard 
-                  key={plan.id} 
-                  plan={plan} 
-                  type="upcoming" 
-                  onMarkDone={handleMarkDone}
-                  onEdit={handleEditPlan}
-                  onDelete={handleDeletePlan}
-                />
-              ))
-            )}
-          </div>
-        </section>
-      </main>
-      <Calendar plans={visiblePlans} />
     </div>
   );
 }
@@ -493,7 +513,7 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete }) {
   );
 }
 
-function Calendar({ plans }) {
+function Calendar({ plans, onDateClick }) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const getDaysInMonth = (year, month) => {
@@ -568,12 +588,15 @@ function Calendar({ plans }) {
           if (status === 'done') bgClass = 'bg-orange-200 dark:bg-orange-900/50 text-orange-900 dark:text-orange-100 font-medium ring-2 ring-orange-100 dark:ring-orange-800';
           if (status === 'both') bgClass = 'bg-gradient-to-br from-orange-200 to-green-200 dark:from-orange-900/50 dark:to-green-900/50 text-gray-900 dark:text-white font-medium';
 
+          const dateStr = day ? `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` : null;
+
           return (
             <div 
               key={idx} 
+              onClick={() => day && onDateClick(dateStr)}
               className={`
                 h-14 md:h-24 flex flex-col items-start justify-start p-2 rounded-lg text-sm transition-all
-                ${day ? bgClass : 'bg-transparent'} 
+                ${day ? bgClass + ' cursor-pointer hover:opacity-80' : 'bg-transparent'} 
                 ${day && !status ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
               `}
             >
