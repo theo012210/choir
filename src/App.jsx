@@ -514,6 +514,7 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete }) {
 }
 
 function Calendar({ plans, onDateClick }) {
+  console.log('Calendar rendering. onDateClick type:', typeof onDateClick);
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const getDaysInMonth = (year, month) => {
@@ -593,20 +594,24 @@ function Calendar({ plans, onDateClick }) {
           return (
             <button 
               key={idx} 
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Button clicked for day:', day);
                 if (day) {
-                  console.log('Clicked date:', dateStr);
+                  console.log('Calling onDateClick with:', dateStr);
                   onDateClick(dateStr);
                 }
               }}
               className={`
-                h-14 md:h-24 flex flex-col items-start justify-start p-2 rounded-lg text-sm transition-all w-full
-                ${day ? bgClass + ' cursor-pointer hover:opacity-80' : 'bg-transparent cursor-default'} 
+                h-14 md:h-24 flex flex-col items-start justify-start p-2 rounded-lg text-sm transition-all w-full relative z-10
+                ${day ? bgClass + ' cursor-pointer hover:opacity-80 hover:scale-[1.02]' : 'bg-transparent cursor-default'} 
                 ${day && !status ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
               `}
               disabled={!day}
             >
-              {day && <span className="text-xs opacity-70">{day}</span>}
+              {day && <span className="text-xs opacity-70 pointer-events-none">{day}</span>}
             </button>
           );
         })}
