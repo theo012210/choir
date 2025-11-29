@@ -22,6 +22,19 @@ function App() {
     status: 'Planned',
     visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER]
   });
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedMode = localStorage.getItem('choir_dark_mode');
+    return savedMode ? JSON.parse(savedMode) : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('choir_dark_mode', JSON.stringify(darkMode));
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('choir_user_session');
@@ -91,7 +104,7 @@ function App() {
   };
 
   if (!user) {
-    return <Auth onLogin={handleLogin} />;
+    return <Auth onLogin={handleLogin} darkMode={darkMode} setDarkMode={setDarkMode} />;
   }
 
   const visiblePlans = plans.filter(plan => plan.visibleTo.includes(currentRole));
@@ -208,13 +221,20 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8 font-sans text-gray-900">
-      <header className="mb-10 flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-xl shadow-md">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-8 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-200">
+      <header className="mb-10 flex flex-col md:flex-row justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md transition-colors duration-200">
         <div>
-          <h1 className="text-3xl font-bold text-indigo-600">Choir Learning Plan</h1>
-          <p className="text-gray-500 mt-1">Welcome, {user.name} ({user.role})</p>
+          <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">Choir Learning Plan</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Welcome, {user.name} ({user.role})</p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center gap-3">
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
           <button 
             onClick={isFormOpen ? handleCancelEdit : () => setIsFormOpen(true)}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
@@ -238,37 +258,37 @@ function App() {
 
       {isChangePasswordOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Change Password</h2>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md transition-colors duration-200">
+            <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Change Password</h2>
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
                 <input
                   type="password"
                   required
                   value={passwordForm.currentPassword}
                   onChange={e => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
                 <input
                   type="password"
                   required
                   value={passwordForm.newPassword}
                   onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
                 <input
                   type="password"
                   required
                   value={passwordForm.confirmPassword}
                   onChange={e => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
               <div className="flex gap-3 mt-6">
@@ -284,7 +304,7 @@ function App() {
                     setIsChangePasswordOpen(false);
                     setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
                   }}
-                  className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                  className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
                 >
                   Cancel
                 </button>
@@ -295,52 +315,52 @@ function App() {
       )}
 
       {isFormOpen && (
-        <div className="mb-10 bg-white p-6 rounded-xl shadow-md animate-fade-in">
-          <h2 className="text-xl font-bold mb-4 text-gray-800">{editingId ? 'Edit Plan' : 'Add New Plan'}</h2>
+        <div className="mb-10 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md animate-fade-in transition-colors duration-200">
+          <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">{editingId ? 'Edit Plan' : 'Add New Plan'}</h2>
           <form onSubmit={handleSavePlan} className="grid gap-4 md:grid-cols-2">
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
               <input
                 type="text"
                 required
                 value={newPlan.title}
                 onChange={e => setNewPlan({...newPlan, title: e.target.value})}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
               <input
                 type="date"
                 required
                 value={newPlan.date}
                 onChange={e => setNewPlan({...newPlan, date: e.target.value})}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
               <textarea
                 required
                 value={newPlan.description}
                 onChange={e => setNewPlan({...newPlan, description: e.target.value})}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                 rows="3"
               />
             </div>
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
               <select
                 value={newPlan.status}
                 onChange={e => setNewPlan({...newPlan, status: e.target.value})}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="Planned">Planned</option>
                 <option value="Done">Done</option>
               </select>
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Visible To</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Visible To</label>
               <div className="flex flex-wrap gap-3">
                 {Object.values(ROLES).map(role => (
                   <label key={role} className="flex items-center gap-2 cursor-pointer">
@@ -350,7 +370,7 @@ function App() {
                       onChange={() => handleRoleChange(role)}
                       className="rounded text-indigo-600 focus:ring-indigo-500"
                     />
-                    <span className="text-sm text-gray-700">{role}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{role}</span>
                   </label>
                 ))}
               </div>
@@ -427,35 +447,35 @@ function App() {
 function PlanCard({ plan, type, onMarkDone, onEdit, onDelete }) {
   const isDone = type === 'done';
   return (
-    <div className={`bg-white p-5 rounded-lg shadow-sm border-l-4 ${isDone ? 'border-emerald-400' : 'border-blue-400'} hover:shadow-md transition-shadow`}>
+    <div className={`bg-white dark:bg-gray-800 p-5 rounded-lg shadow-sm border-l-4 ${isDone ? 'border-emerald-400' : 'border-blue-400'} hover:shadow-md transition-all duration-200`}>
       <div className="flex justify-between items-start mb-2">
-        <h3 className="text-xl font-bold text-gray-800">{plan.title}</h3>
+        <h3 className="text-xl font-bold text-gray-800 dark:text-white">{plan.title}</h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">{plan.date}</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{plan.date}</span>
           <button 
             onClick={() => onEdit(plan)}
-            className="text-gray-400 hover:text-indigo-600 transition"
+            className="text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
             title="Edit"
           >
             ✏️
           </button>
           <button 
             onClick={() => onDelete(plan.id)}
-            className="text-gray-400 hover:text-red-600 transition"
+            className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition"
             title="Delete"
           >
             🗑️
           </button>
         </div>
       </div>
-      <p className="text-gray-600">{plan.description}</p>
+      <p className="text-gray-600 dark:text-gray-300">{plan.description}</p>
       {plan.createdBy && (
-        <p className="text-xs text-gray-400 mt-1">Added by: {plan.createdBy}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Added by: {plan.createdBy}</p>
       )}
       <div className="mt-3 flex justify-between items-center">
         <div className="flex gap-2 flex-wrap">
           {plan.visibleTo.map(role => (
-            <span key={role} className="text-xs font-medium px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
+            <span key={role} className="text-xs font-medium px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800">
               {role}
             </span>
           ))}
@@ -463,7 +483,7 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete }) {
         {!isDone && (
           <button
             onClick={() => onMarkDone(plan.id)}
-            className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition"
+            className="text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition"
           >
             Mark Done
           </button>
@@ -520,33 +540,33 @@ function Calendar({ plans }) {
   };
 
   return (
-    <section className="mt-12 bg-white p-6 rounded-xl shadow-md">
+    <section className="mt-12 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md transition-colors duration-200">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white flex items-center gap-2">
           <span>🗓️</span> Monthly Schedule
         </h2>
         <div className="flex items-center gap-4">
-          <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-full transition">◀</button>
-          <span className="text-lg font-medium min-w-[140px] text-center">
+          <button onClick={prevMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition text-gray-600 dark:text-gray-300">◀</button>
+          <span className="text-lg font-medium min-w-[140px] text-center text-gray-800 dark:text-white">
             {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
           </span>
-          <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-full transition">▶</button>
+          <button onClick={nextMonth} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition text-gray-600 dark:text-gray-300">▶</button>
         </div>
       </div>
 
       <div className="grid grid-cols-7 gap-2 text-center mb-2">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-          <div key={d} className="text-sm font-bold text-gray-400 uppercase tracking-wider">{d}</div>
+          <div key={d} className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{d}</div>
         ))}
       </div>
       
       <div className="grid grid-cols-7 gap-2">
         {days.map((day, idx) => {
           const status = getDayStatus(day);
-          let bgClass = 'bg-gray-50 text-gray-700';
-          if (status === 'planned') bgClass = 'bg-green-200 text-green-900 font-medium ring-2 ring-green-100';
-          if (status === 'done') bgClass = 'bg-orange-200 text-orange-900 font-medium ring-2 ring-orange-100';
-          if (status === 'both') bgClass = 'bg-gradient-to-br from-orange-200 to-green-200 text-gray-900 font-medium';
+          let bgClass = 'bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300';
+          if (status === 'planned') bgClass = 'bg-green-200 dark:bg-green-900/50 text-green-900 dark:text-green-100 font-medium ring-2 ring-green-100 dark:ring-green-800';
+          if (status === 'done') bgClass = 'bg-orange-200 dark:bg-orange-900/50 text-orange-900 dark:text-orange-100 font-medium ring-2 ring-orange-100 dark:ring-orange-800';
+          if (status === 'both') bgClass = 'bg-gradient-to-br from-orange-200 to-green-200 dark:from-orange-900/50 dark:to-green-900/50 text-gray-900 dark:text-white font-medium';
 
           return (
             <div 
@@ -554,7 +574,7 @@ function Calendar({ plans }) {
               className={`
                 h-14 md:h-24 flex flex-col items-start justify-start p-2 rounded-lg text-sm transition-all
                 ${day ? bgClass : 'bg-transparent'} 
-                ${day && !status ? 'hover:bg-gray-100' : ''}
+                ${day && !status ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
               `}
             >
               {day && <span className="text-xs opacity-70">{day}</span>}
@@ -563,13 +583,13 @@ function Calendar({ plans }) {
         })}
       </div>
 
-      <div className="mt-6 flex gap-6 text-sm text-gray-600 justify-center border-t pt-4">
+      <div className="mt-6 flex gap-6 text-sm text-gray-600 dark:text-gray-400 justify-center border-t dark:border-gray-700 pt-4">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-green-200 rounded ring-2 ring-green-100"></div>
+          <div className="w-4 h-4 bg-green-200 dark:bg-green-900/50 rounded ring-2 ring-green-100 dark:ring-green-800"></div>
           <span>Coming Plans</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-orange-200 rounded ring-2 ring-orange-100"></div>
+          <div className="w-4 h-4 bg-orange-200 dark:bg-orange-900/50 rounded ring-2 ring-orange-100 dark:ring-orange-800"></div>
           <span>What We Did</span>
         </div>
       </div>
