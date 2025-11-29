@@ -591,17 +591,23 @@ function Calendar({ plans, onDateClick }) {
           const dateStr = day ? `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}` : null;
 
           return (
-            <div 
+            <button 
               key={idx} 
-              onClick={() => day && onDateClick(dateStr)}
+              onClick={() => {
+                if (day) {
+                  console.log('Clicked date:', dateStr);
+                  onDateClick(dateStr);
+                }
+              }}
               className={`
-                h-14 md:h-24 flex flex-col items-start justify-start p-2 rounded-lg text-sm transition-all
-                ${day ? bgClass + ' cursor-pointer hover:opacity-80' : 'bg-transparent'} 
+                h-14 md:h-24 flex flex-col items-start justify-start p-2 rounded-lg text-sm transition-all w-full
+                ${day ? bgClass + ' cursor-pointer hover:opacity-80' : 'bg-transparent cursor-default'} 
                 ${day && !status ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
               `}
+              disabled={!day}
             >
               {day && <span className="text-xs opacity-70">{day}</span>}
-            </div>
+            </button>
           );
         })}
       </div>
