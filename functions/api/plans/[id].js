@@ -2,11 +2,11 @@ export async function onRequestPut(context) {
   const { request, env, params } = context;
   const id = params.id;
   const body = await request.json();
-  const { title, date, description, status, visibleTo } = body;
+  const { title, date, description, status, visibleTo, completedTasks } = body;
 
   try {
-    await env.DB.prepare('UPDATE plans SET title = ?, date = ?, description = ?, status = ?, visibleTo = ? WHERE id = ?')
-      .bind(title, date, description, status, JSON.stringify(visibleTo), id)
+    await env.DB.prepare('UPDATE plans SET title = ?, date = ?, description = ?, status = ?, visibleTo = ?, completedTasks = ? WHERE id = ?')
+      .bind(title, date, description, status, JSON.stringify(visibleTo), JSON.stringify(completedTasks || []), id)
       .run();
 
     return new Response(JSON.stringify({ id, ...body }), { 

@@ -16,5 +16,6 @@ CREATE TABLE IF NOT EXISTS plans (
   description TEXT NOT NULL,
   status TEXT NOT NULL,
   visibleTo TEXT NOT NULL,
-  createdBy TEXT
+  createdBy TEXT,
+  completedTasks TEXT
 );

@@ -4,7 +4,8 @@ export async function onRequestGet(context) {
     const { results } = await env.DB.prepare('SELECT * FROM plans').all();
     const plans = results.map(plan => ({
       ...plan,
-      visibleTo: JSON.parse(plan.visibleTo)
+      visibleTo: JSON.parse(plan.visibleTo),
+      completedTasks: plan.completedTasks ? JSON.parse(plan.completedTasks) : []
     }));
     return new Response(JSON.stringify(plans), { 
       status: 200,
@@ -21,11 +22,11 @@ export async function onRequestGet(context) {
 export async function onRequestPost(context) {
   const { request, env } = context;
   const body = await request.json();
-  const { title, date, description, status, visibleTo, createdBy } = body;
+  const { title, date, description, status, visibleTo, createdBy, completedTasks } = body;
 
   try {
-    const result = await env.DB.prepare('INSERT INTO plans (title, date, description, status, visibleTo, createdBy) VALUES (?, ?, ?, ?, ?, ?)')
-      .bind(title, date, description, status, JSON.stringify(visibleTo), createdBy)
+    const result = await env.DB.prepare('INSERT INTO plans (title, date, description, status, visibleTo, createdBy, completedTasks) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .bind(title, date, description, status, JSON.stringify(visibleTo), createdBy, JSON.stringify(completedTasks || []))
       .run();
 
     const newPlan = {

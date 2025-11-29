@@ -2,14 +2,17 @@ import { useState, useEffect } from 'react';
 import { ROLES, PLANS } from './data/mockData';
 import Auth from './components/Auth';
 import SessionPlanner from './components/SessionPlanner';
+import TaskCompletion from './components/TaskCompletion';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [currentRole, setCurrentRole] = useState(ROLES.MEMBER);
   const [plans, setPlans] = useState(PLANS);
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'planner'
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'planner' | 'taskCompletion'
   const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [sessionSlots, setSessionSlots] = useState({}); // Store slots by date
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -185,16 +188,11 @@ function App() {
   };
 
   const handleMarkDone = async (planId) => {
-    const planToUpdate = plans.find(p => p.id === planId);
-    if (!planToUpdate) return;
-
-    const updatedPlanData = { ...planToUpdate, status: 'Done' };
-
     try {
       const response = await fetch(`/api/plans/${planId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedPlanData),
+        body: JSON.stringify({ ...plans.find(p => p.id === planId), status: 'Done' }),
       });
 
       if (response.ok) {
@@ -204,6 +202,24 @@ function App() {
       }
     } catch (error) {
       console.error('Failed to mark plan as done:', error);
+    }
+  };
+
+  const handleRevertPlan = async (planId) => {
+    try {
+      const response = await fetch(`/api/plans/${planId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...plans.find(p => p.id === planId), status: 'Planned' }),
+      });
+
+      if (response.ok) {
+        setPlans(plans.map(plan => 
+          plan.id === planId ? { ...plan, status: 'Planned' } : plan
+        ));
+      }
+    } catch (error) {
+      console.error('Failed to revert plan:', error);
     }
   };
 
@@ -223,13 +239,79 @@ function App() {
     }
   };
 
+  const handleViewTasks = (plan) => {
+    setSelectedPlan(plan);
+    setCurrentView('taskCompletion');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleUpdatePlan = async (updatedPlan) => {
+    try {
+      const response = await fetch(`/api/plans/${updatedPlan.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPlan),
+      });
+
+      if (response.ok) {
+        setPlans(plans.map(p => p.id === updatedPlan.id ? updatedPlan : p));
+        if (selectedPlan && selectedPlan.id === updatedPlan.id) {
+          setSelectedPlan(updatedPlan);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update plan:', error);
+    }
+  };
+
   const handleDateClick = (dateStr) => {
     setSelectedDate(dateStr);
     setCurrentView('planner');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleBackToDashboard = () => {
+  const handleSaveSessionPlan = async (description) => {
+    const newSessionPlan = {
+      title: `Session Plan for ${selectedDate}`,
+      date: selectedDate,
+      description: description,
+      status: 'Planned',
+      visibleTo: Object.values(ROLES),
+      createdBy: user.name
+    };
+
+    try {
+      const response = await fetch('/api/plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSessionPlan),
+      });
+
+      if (response.ok) {
+        await fetchPlans();
+        // Clear the slots for this date as it is saved
+        setSessionSlots(prev => {
+            const newState = { ...prev };
+            delete newState[selectedDate];
+            return newState;
+        });
+        setCurrentView('dashboard');
+        setSelectedDate(null);
+        alert('Session plan saved successfully!');
+      } else {
+        const error = await response.json();
+        alert(`Failed to save plan: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Failed to save session plan:', error);
+      alert('Failed to save session plan.');
+    }
+  };
+
+  const handleBackToDashboard = (slots) => {
+    if (selectedDate && slots) {
+      setSessionSlots(prev => ({ ...prev, [selectedDate]: slots }));
+    }
     setCurrentView('dashboard');
     setSelectedDate(null);
   };
@@ -329,7 +411,22 @@ function App() {
       )}
 
       {currentView === 'planner' ? (
-        <SessionPlanner date={selectedDate} onBack={handleBackToDashboard} />
+        <SessionPlanner 
+          date={selectedDate} 
+          initialSlots={sessionSlots[selectedDate] || []}
+          existingPlan={plans.find(p => p.date === selectedDate && p.title.includes('Session Plan')) || plans.find(p => p.date === selectedDate)}
+          onBack={handleBackToDashboard}
+          onSavePlan={handleSaveSessionPlan}
+        />
+      ) : currentView === 'taskCompletion' ? (
+        <TaskCompletion 
+          plan={selectedPlan}
+          onBack={() => {
+            setCurrentView('dashboard');
+            setSelectedPlan(null);
+          }}
+          onUpdatePlan={handleUpdatePlan}
+        />
       ) : (
         <>
           {isFormOpen && (
@@ -430,6 +527,7 @@ function App() {
                       type="done" 
                       onEdit={handleEditPlan}
                       onDelete={handleDeletePlan}
+                      onRevert={handleRevertPlan}
                     />
                   ))
                 )}
@@ -452,6 +550,7 @@ function App() {
                       onMarkDone={handleMarkDone}
                       onEdit={handleEditPlan}
                       onDelete={handleDeletePlan}
+                      onViewTasks={handleViewTasks}
                     />
                   ))
                 )}
@@ -464,8 +563,10 @@ function App() {
     </div>
   );
 }
-function PlanCard({ plan, type, onMarkDone, onEdit, onDelete }) {
+function PlanCard({ plan, type, onMarkDone, onEdit, onDelete, onViewTasks, onRevert }) {
   const isDone = type === 'done';
+  const isFuture = new Date(plan.date) > new Date();
+
   return (
     <div className={`bg-white dark:bg-gray-800 p-5 rounded-lg shadow-sm border-l-4 ${isDone ? 'border-emerald-400' : 'border-blue-400'} hover:shadow-md transition-all duration-200`}>
       <div className="flex justify-between items-start mb-2">
@@ -500,14 +601,32 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete }) {
             </span>
           ))}
         </div>
-        {!isDone && (
-          <button
-            onClick={() => onMarkDone(plan.id)}
-            className="text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition"
-          >
-            Mark Done
-          </button>
-        )}
+        <div className="flex gap-2">
+            {!isDone && onViewTasks && (
+                <button
+                onClick={() => onViewTasks(plan)}
+                className="text-sm bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded hover:bg-indigo-200 dark:hover:bg-indigo-800 transition"
+                >
+                Track Tasks
+                </button>
+            )}
+            {!isDone && (
+            <button
+                onClick={() => onMarkDone(plan.id)}
+                className="text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-3 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition"
+            >
+                Mark Done
+            </button>
+            )}
+            {isDone && isFuture && onRevert && (
+              <button
+                onClick={() => onRevert(plan.id)}
+                className="text-sm bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 px-3 py-1 rounded hover:bg-yellow-200 dark:hover:bg-yellow-800 transition"
+              >
+                Revert
+              </button>
+            )}
+        </div>
       </div>
     </div>
   );

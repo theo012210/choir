@@ -1,12 +1,69 @@
 import { useState, useEffect } from 'react';
 
-export default function SessionPlanner({ date, onBack }) {
+export default function SessionPlanner({ date, initialSlots, onBack, onSavePlan, existingPlan }) {
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('17:00');
-  const [slots, setSlots] = useState([]);
+  const [slots, setSlots] = useState(initialSlots || []);
   const [selectedSlots, setSelectedSlots] = useState(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const [taskDescription, setTaskDescription] = useState('');
+  const [originalDescription, setOriginalDescription] = useState('');
+
+  useEffect(() => {
+    if (initialSlots && initialSlots.length > 0) {
+      setSlots(initialSlots);
+      return;
+    }
+
+    if (existingPlan && existingPlan.description) {
+      const lines = existingPlan.description.split('\n');
+      const parsedTasks = [];
+      let minTime = '09:00';
+      let maxTime = '17:00';
+
+      for (const line of lines) {
+        const match = line.match(/^(\d{2}:\d{2})-(\d{2}:\d{2}):\s*(.+)$/);
+        if (match) {
+          parsedTasks.push({ start: match[1], end: match[2], task: match[3] });
+          if (match[1] < minTime) minTime = match[1];
+          if (match[2] > maxTime) maxTime = match[2];
+        }
+      }
+
+      if (parsedTasks.length > 0) {
+        setStartTime(minTime);
+        setEndTime(maxTime);
+        
+        // Generate slots
+        const start = new Date(`2000-01-01T${minTime}`);
+        const end = new Date(`2000-01-01T${maxTime}`);
+        const newSlots = [];
+        let current = start;
+        
+        while (current < end) {
+          const timeStr = current.toTimeString().slice(0, 5);
+          const next = new Date(current.getTime() + 5 * 60000);
+          const nextStr = next.toTimeString().slice(0, 5);
+          
+          // Find if this slot belongs to a task
+          const task = parsedTasks.find(t => t.start <= timeStr && t.end > timeStr);
+          
+          newSlots.push({
+            id: timeStr,
+            start: timeStr,
+            end: nextStr,
+            task: task ? task.task : '',
+            isCombined: !!task,
+            groupId: task ? task.start : null
+          });
+          current = next;
+        }
+        setSlots(newSlots);
+      } else {
+        setOriginalDescription(existingPlan.description);
+      }
+    }
+  }, [initialSlots, existingPlan]);
 
   // Generate 5-minute intervals
   const generateSlots = () => {
@@ -75,6 +132,37 @@ export default function SessionPlanner({ date, onBack }) {
     setSelectedSlots(new Set());
   };
 
+  const handleSavePlan = () => {
+    // Group slots to get tasks
+    const tasks = [];
+    let currentGroup = null;
+
+    slots.forEach(slot => {
+      if (slot.isCombined && slot.task) {
+        if (currentGroup && currentGroup.groupId === slot.groupId) {
+          currentGroup.end = slot.end;
+        } else {
+          if (currentGroup) tasks.push(currentGroup);
+          currentGroup = { ...slot };
+        }
+      } else {
+        if (currentGroup) {
+          tasks.push(currentGroup);
+          currentGroup = null;
+        }
+      }
+    });
+    if (currentGroup) tasks.push(currentGroup);
+
+    if (tasks.length === 0) {
+      alert("No tasks to save!");
+      return;
+    }
+
+    const description = tasks.map(t => `${t.start}-${t.end}: ${t.task}`).join('\n');
+    onSavePlan(description);
+  };
+
   // Helper to group slots for rendering
   const groupedSlots = [];
   let currentGroup = null;
@@ -107,7 +195,7 @@ export default function SessionPlanner({ date, onBack }) {
     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md transition-colors duration-200">
       <div className="flex items-center justify-between mb-6">
         <button 
-          onClick={onBack}
+          onClick={() => onBack(slots)}
           className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-2"
         >
           ← Back
@@ -117,6 +205,13 @@ export default function SessionPlanner({ date, onBack }) {
         </h2>
         <div className="w-20"></div> {/* Spacer */}
       </div>
+
+      {originalDescription && (
+        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <h3 className="text-sm font-bold text-yellow-800 dark:text-yellow-200 mb-2">Original Plan Description (Could not parse automatically)</h3>
+          <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 font-mono">{originalDescription}</pre>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-4 mb-8 items-end bg-gray-50 dark:bg-gray-700/30 p-4 rounded-lg">
         <div>
@@ -149,17 +244,25 @@ export default function SessionPlanner({ date, onBack }) {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200">Timeline</h3>
-            <button
-              onClick={handleCombine}
-              disabled={selectedSlots.size === 0}
-              className={`px-4 py-2 rounded-lg transition ${
-                selectedSlots.size > 0 
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-700' 
-                  : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              Combine & Add Task
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleCombine}
+                disabled={selectedSlots.size === 0}
+                className={`px-4 py-2 rounded-lg transition ${
+                  selectedSlots.size > 0 
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-700' 
+                    : 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                Combine & Add Task
+              </button>
+              <button
+                onClick={handleSavePlan}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                Save Plan
+              </button>
+            </div>
           </div>
 
           {isEditing && (
@@ -250,6 +353,15 @@ export default function SessionPlanner({ date, onBack }) {
                 )}
               </div>
             ))}
+          </div>
+          
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={handleSavePlan}
+              className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition font-bold shadow-lg flex items-center gap-2"
+            >
+              <span>💾</span> Save Plan to Dashboard
+            </button>
           </div>
         </div>
       )}
