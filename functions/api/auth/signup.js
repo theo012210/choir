@@ -21,14 +21,14 @@ export async function onRequestPost(context) {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const result = await env.DB.prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)')
-      .bind(name, email, hashedPassword, role)
+      .bind(name, email, hashedPassword, 'Member')
       .run();
 
     const newUser = {
       id: result.meta.last_row_id,
       name,
       email,
-      role
+      role: 'Member'
     };
 
     return new Response(JSON.stringify(newUser), { 

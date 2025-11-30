@@ -104,15 +104,12 @@ export default function Auth({ onLogin, darkMode, setDarkMode }) {
           {!isLogin && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
-              <select
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-                value={formData.role}
-                onChange={e => setFormData({...formData, role: e.target.value})}
-              >
-                {Object.values(ROLES).map(role => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
+              <input
+                type="text"
+                disabled
+                className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded-md bg-gray-100 cursor-not-allowed"
+                value={ROLES.MEMBER}
+              />
             </div>
           )}
 
