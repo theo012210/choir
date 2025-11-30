@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
 export default function SessionPlanner({ date, initialSlots, onBack, onSavePlan, existingPlan }) {
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('17:00');
+  const [startTime, setStartTime] = useState('12:00');
+  const [endTime, setEndTime] = useState('17:30');
   const [slots, setSlots] = useState(initialSlots || []);
   const [selectedSlots, setSelectedSlots] = useState(new Set());
   const [isEditing, setIsEditing] = useState(false);
