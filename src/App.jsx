@@ -589,7 +589,7 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete, onViewTasks, onRev
           </button>
         </div>
       </div>
-      <p className="text-gray-600 dark:text-gray-300">{plan.description}</p>
+      <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{plan.description}</p>
       {plan.createdBy && (
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Added by: {plan.createdBy}</p>
       )}
