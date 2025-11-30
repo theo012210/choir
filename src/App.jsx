@@ -123,10 +123,27 @@ function App() {
     
     try {
       if (editingId) {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timestamp = `${day}-${month}-${year} ${hours}:${minutes}`;
+
+        let description = newPlan.description;
+        const lastEditedRegex = /\n\nLast edited by: .* at \d{2}-\d{2}-\d{4} \d{2}:\d{2}$/;
+        if (lastEditedRegex.test(description)) {
+          description = description.replace(lastEditedRegex, '');
+        }
+        const updatedDescription = `${description}\n\nLast edited by: ${user.name} at ${timestamp}`;
+
+        const planToUpdate = { ...newPlan, description: updatedDescription };
+
         const response = await fetch(`/api/plans/${editingId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newPlan),
+          body: JSON.stringify(planToUpdate),
         });
         
         if (response.ok) {
@@ -161,7 +178,11 @@ function App() {
   };
 
   const handleEditPlan = (plan) => {
-    setNewPlan(plan);
+    // Strip the last edited line for the form
+    const lastEditedRegex = /\n\nLast edited by: .* at \d{2}-\d{2}-\d{4} \d{2}:\d{2}$/;
+    const cleanDescription = plan.description.replace(lastEditedRegex, '');
+    
+    setNewPlan({ ...plan, description: cleanDescription });
     setEditingId(plan.id);
     setIsFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -272,36 +293,75 @@ function App() {
   };
 
   const handleSaveSessionPlan = async (description) => {
-    const newSessionPlan = {
-      title: `Session Plan for ${selectedDate}`,
-      date: selectedDate,
-      description: description,
-      status: 'Planned',
-      visibleTo: Object.values(ROLES),
-      createdBy: user.name
-    };
+    const existingPlan = plans.find(p => p.date === selectedDate && p.title.includes('Session Plan'));
 
     try {
-      const response = await fetch('/api/plans', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSessionPlan),
-      });
+      if (existingPlan) {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timestamp = `${day}-${month}-${year} ${hours}:${minutes}`;
 
-      if (response.ok) {
-        await fetchPlans();
-        // Clear the slots for this date as it is saved
-        setSessionSlots(prev => {
+        let newDesc = description;
+        const lastEditedRegex = /\n\nLast edited by: .* at \d{2}-\d{2}-\d{4} \d{2}:\d{2}$/;
+        if (lastEditedRegex.test(newDesc)) {
+          newDesc = newDesc.replace(lastEditedRegex, '');
+        }
+        const updatedDescription = `${newDesc}\n\nLast edited by: ${user.name} at ${timestamp}`;
+
+        const response = await fetch(`/api/plans/${existingPlan.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...existingPlan, description: updatedDescription }),
+        });
+
+        if (response.ok) {
+          await fetchPlans();
+          setSessionSlots(prev => {
             const newState = { ...prev };
             delete newState[selectedDate];
             return newState;
-        });
-        setCurrentView('dashboard');
-        setSelectedDate(null);
-        alert('Session plan saved successfully!');
+          });
+          setCurrentView('dashboard');
+          setSelectedDate(null);
+          alert('Session plan updated successfully!');
+        } else {
+          const error = await response.json();
+          alert(`Failed to update plan: ${error.error || 'Unknown error'}`);
+        }
       } else {
-        const error = await response.json();
-        alert(`Failed to save plan: ${error.error || 'Unknown error'}`);
+        const newSessionPlan = {
+          title: `Session Plan for ${selectedDate}`,
+          date: selectedDate,
+          description: description,
+          status: 'Planned',
+          visibleTo: Object.values(ROLES),
+          createdBy: user.name
+        };
+
+        const response = await fetch('/api/plans', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newSessionPlan),
+        });
+
+        if (response.ok) {
+          await fetchPlans();
+          setSessionSlots(prev => {
+            const newState = { ...prev };
+            delete newState[selectedDate];
+            return newState;
+          });
+          setCurrentView('dashboard');
+          setSelectedDate(null);
+          alert('Session plan saved successfully!');
+        } else {
+          const error = await response.json();
+          alert(`Failed to save plan: ${error.error || 'Unknown error'}`);
+        }
       }
     } catch (error) {
       console.error('Failed to save session plan:', error);
@@ -578,6 +638,16 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete, onViewTasks, onRev
   const isDone = type === 'done';
   const isFuture = new Date(plan.date) > new Date();
 
+  const lastEditedRegex = /\n\nLast edited by: (.*) at (\d{2}-\d{2}-\d{4} \d{2}:\d{2})$/;
+  const match = plan.description.match(lastEditedRegex);
+  let displayDescription = plan.description;
+  let lastEditedInfo = null;
+
+  if (match) {
+    displayDescription = plan.description.replace(lastEditedRegex, '');
+    lastEditedInfo = `Last edited by: ${match[1]} at ${match[2]}`;
+  }
+
   return (
     <div className={`bg-white dark:bg-gray-800 p-5 rounded-lg shadow-sm border-l-4 ${isDone ? 'border-emerald-400' : 'border-blue-400'} hover:shadow-md transition-all duration-200`}>
       <div className="flex justify-between items-start mb-2">
@@ -600,9 +670,12 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete, onViewTasks, onRev
           </button>
         </div>
       </div>
-      <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{plan.description}</p>
+      <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{displayDescription}</p>
       {plan.createdBy && (
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Added by: {plan.createdBy}</p>
+      )}
+      {lastEditedInfo && (
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{lastEditedInfo}</p>
       )}
       <div className="mt-3 flex justify-between items-center">
         <div className="flex gap-2 flex-wrap">

@@ -18,8 +18,8 @@ export default function SessionPlanner({ date, initialSlots, onBack, onSavePlan,
     if (existingPlan && existingPlan.description) {
       const lines = existingPlan.description.split('\n');
       const parsedTasks = [];
-      let minTime = '09:00';
-      let maxTime = '17:00';
+      let minTime = '23:59';
+      let maxTime = '00:00';
 
       for (const line of lines) {
         const match = line.match(/^(\d{2}:\d{2})-(\d{2}:\d{2}):\s*(.+)$/);
@@ -73,14 +73,24 @@ export default function SessionPlanner({ date, initialSlots, onBack, onSavePlan,
 
     let current = start;
     while (current < end) {
+      const timeStr = current.toTimeString().slice(0, 5);
       const next = new Date(current.getTime() + 5 * 60000);
-      newSlots.push({
-        id: current.toTimeString().slice(0, 5),
-        start: current.toTimeString().slice(0, 5),
-        end: next.toTimeString().slice(0, 5),
-        task: '',
-        isCombined: false
-      });
+      const nextStr = next.toTimeString().slice(0, 5);
+
+      // Check if we have an existing slot at this time to preserve it
+      const existingSlot = slots.find(s => s.start === timeStr);
+
+      if (existingSlot) {
+        newSlots.push(existingSlot);
+      } else {
+        newSlots.push({
+          id: timeStr,
+          start: timeStr,
+          end: nextStr,
+          task: '',
+          isCombined: false
+        });
+      }
       current = next;
     }
     setSlots(newSlots);
