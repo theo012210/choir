@@ -3,13 +3,14 @@ import { ROLES, PLANS } from './data/mockData';
 import Auth from './components/Auth';
 import SessionPlanner from './components/SessionPlanner';
 import TaskCompletion from './components/TaskCompletion';
+import AdminPortal from './components/AdminPortal';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [currentRole, setCurrentRole] = useState(ROLES.MEMBER);
   const [plans, setPlans] = useState(PLANS);
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'planner' | 'taskCompletion'
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'planner' | 'taskCompletion' | 'admin'
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [sessionSlots, setSessionSlots] = useState({}); // Store slots by date
@@ -113,7 +114,7 @@ function App() {
     return <Auth onLogin={handleLogin} darkMode={darkMode} setDarkMode={setDarkMode} />;
   }
 
-  const visiblePlans = plans.filter(plan => plan.visibleTo.includes(currentRole));
+  const visiblePlans = plans.filter(plan => currentRole === ROLES.ADMIN || plan.visibleTo.includes(currentRole));
   const donePlans = visiblePlans.filter(plan => plan.status === 'Done');
   const upcomingPlans = visiblePlans.filter(plan => plan.status === 'Planned');
 
@@ -331,6 +332,14 @@ function App() {
           >
             {darkMode ? '☀️' : '🌙'}
           </button>
+          {currentRole === ROLES.ADMIN && (
+            <button
+              onClick={() => setCurrentView('admin')}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+            >
+              Admin Portal
+            </button>
+          )}
           <button 
             onClick={isFormOpen ? handleCancelEdit : () => setIsFormOpen(true)}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
@@ -427,6 +436,8 @@ function App() {
           }}
           onUpdatePlan={handleUpdatePlan}
         />
+      ) : currentView === 'admin' ? (
+        <AdminPortal onBack={() => setCurrentView('dashboard')} />
       ) : (
         <>
           {isFormOpen && (
@@ -477,7 +488,7 @@ function App() {
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Visible To</label>
                   <div className="flex flex-wrap gap-3">
-                    {Object.values(ROLES).map(role => (
+                    {Object.values(ROLES).filter(role => role !== ROLES.ADMIN).map(role => (
                       <label key={role} className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
