@@ -320,7 +320,7 @@ function App() {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-8 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-200">
       <header className="mb-10 flex flex-col md:flex-row justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md transition-colors duration-200">
         <div>
-          <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">Choir Learning Plan</h1>
+          <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">Magpie Choir Teaching Plan</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Welcome, {user.name} ({user.role})</p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center gap-3">
