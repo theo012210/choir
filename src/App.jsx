@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ROLES, PLANS } from './data/mockData';
 import Auth from './components/Auth';
 import SessionPlanner from './components/SessionPlanner';
@@ -640,13 +640,47 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete, onViewTasks, onRev
 
   const lastEditedRegex = /\n\nLast edited by: (.*) at (\d{2}-\d{2}-\d{4} \d{2}:\d{2})$/;
   const match = plan.description.match(lastEditedRegex);
-  let displayDescription = plan.description;
+  let cleanDescription = plan.description;
   let lastEditedInfo = null;
 
   if (match) {
-    displayDescription = plan.description.replace(lastEditedRegex, '');
+    cleanDescription = plan.description.replace(lastEditedRegex, '');
     lastEditedInfo = `Last edited by: ${match[1]} at ${match[2]}`;
   }
+
+  const tasks = useMemo(() => {
+    const lines = cleanDescription.split('\n');
+    const parsedTasks = [];
+    let currentTask = null;
+
+    lines.forEach((line, index) => {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) return;
+
+      const match = line.match(/^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})(?::|\s)?\s*(.*)$/);
+      
+      if (match) {
+        if (currentTask) {
+          parsedTasks.push(currentTask);
+        }
+        currentTask = {
+          index, 
+          start: match[1],
+          end: match[2],
+          task: match[3].trim(),
+        };
+      } else if (currentTask) {
+        currentTask.task += ' ' + trimmedLine;
+      }
+    });
+
+    if (currentTask) {
+      parsedTasks.push(currentTask);
+    }
+    return parsedTasks;
+  }, [cleanDescription]);
+
+  const completedIndices = new Set(plan.completedTasks || []);
 
   return (
     <div className={`bg-white dark:bg-gray-800 p-5 rounded-lg shadow-sm border-l-4 ${isDone ? 'border-emerald-400' : 'border-blue-400'} hover:shadow-md transition-all duration-200`}>
@@ -670,7 +704,29 @@ function PlanCard({ plan, type, onMarkDone, onEdit, onDelete, onViewTasks, onRev
           </button>
         </div>
       </div>
-      <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{displayDescription}</p>
+      
+      {isDone && tasks.length > 0 ? (
+        <div className="space-y-2 mt-2 mb-3">
+          {tasks.map(task => (
+            <div key={task.index} className="flex items-start gap-2 text-sm">
+              <span className={`shrink-0 w-4 h-4 border rounded flex items-center justify-center mt-0.5 ${
+                completedIndices.has(task.index) 
+                  ? 'bg-emerald-500 border-emerald-500 text-white' 
+                  : 'border-gray-300 dark:border-gray-600'
+              }`}>
+                {completedIndices.has(task.index) && '✓'}
+              </span>
+              <div className={completedIndices.has(task.index) ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}>
+                <span className="font-mono text-xs mr-2 text-gray-500">{task.start}-{task.end}</span>
+                {task.task}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{cleanDescription}</p>
+      )}
+
       {plan.createdBy && (
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Added by: {plan.createdBy}</p>
       )}
