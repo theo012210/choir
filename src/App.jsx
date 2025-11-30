@@ -681,7 +681,7 @@ function Calendar({ plans, onDateClick }) {
 
   return (
     <section className="mt-12 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md transition-colors duration-200">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h2 className="text-2xl font-semibold text-gray-800 dark:text-white flex items-center gap-2">
           <span>🗓️</span> Monthly Schedule
         </h2>
