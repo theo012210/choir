@@ -16,7 +16,6 @@ function App() {
   const [sessionSlots, setSessionSlots] = useState({}); // Store slots by date
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
-  const [lastSync, setLastSync] = useState(null);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -71,15 +70,6 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         setPlans(data);
-        
-        // Update last sync time
-        const now = new Date();
-        const day = String(now.getDate()).padStart(2, '0');
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const year = now.getFullYear();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        setLastSync(`${day}-${month}-${year} ${hours}:${minutes}`);
       }
     } catch (error) {
       console.error('Failed to fetch plans:', error);
@@ -404,7 +394,6 @@ function App() {
         <div>
           <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">Magpie Choir Teaching Plan</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Welcome, {user.name} ({user.role})</p>
-          {lastSync && <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Last synchronised at {lastSync}</p>}
         </div>
         <div className="mt-4 md:mt-0 flex items-center gap-3">
           <button
