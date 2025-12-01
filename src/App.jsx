@@ -53,6 +53,17 @@ function App() {
     fetchPlans();
   }, []);
 
+  // Auto-sync plans every second when user is logged in
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(() => {
+      fetchPlans();
+    }, 1000); // Fetch every 1 second
+
+    return () => clearInterval(interval);
+  }, [user]);
+
   const fetchPlans = async () => {
     try {
       const response = await fetch('/api/plans');
