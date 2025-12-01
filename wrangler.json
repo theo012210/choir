@@ -9,8 +9,7 @@
 		{
 			"binding": "DB",
 			"database_name": "choir-db",
-			"database_id": "9b62682a-8ff5-45e3-976d-6e38786d4960",
-			"remote": true
+			"database_id": "9b62682a-8ff5-45e3-976d-6e38786d4960"
 		}
 	]
 }
