@@ -90,7 +90,7 @@ export default function DailyReflection({ date, user, onBack }) {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="block text-lg font-semibold text-emerald-600 dark:text-emerald-400">
-              What went well? (Good)
+              What went well?
             </label>
             <textarea
               value={reflection.good}
@@ -103,7 +103,7 @@ export default function DailyReflection({ date, user, onBack }) {
 
           <div className="space-y-2">
             <label className="block text-lg font-semibold text-red-600 dark:text-red-400">
-              What needs improvement? (Bad)
+              What needs improvement?
             </label>
             <textarea
               value={reflection.bad}
