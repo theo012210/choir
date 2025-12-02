@@ -20,13 +20,27 @@ export default function SessionPlanner({ date, initialSlots, onBack, onSavePlan,
       const parsedTasks = [];
       let minTime = '23:59';
       let maxTime = '00:00';
+      let currentTask = null;
 
       for (const line of lines) {
-        const match = line.match(/^(\d{2}:\d{2})-(\d{2}:\d{2}):\s*(.+)$/);
+        const trimmedLine = line.trim();
+        if (!trimmedLine) continue;
+        
+        // Ignore "Last edited by" lines
+        if (trimmedLine.startsWith('Last edited by:')) continue;
+
+        // Try to match time range (allow optional colon or space separator, and spaces around hyphen)
+        const match = trimmedLine.match(/^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})[:\s]*\s*(.*)$/);
+        
         if (match) {
-          parsedTasks.push({ start: match[1], end: match[2], task: match[3] });
+          currentTask = { start: match[1], end: match[2], task: match[3] };
+          parsedTasks.push(currentTask);
           if (match[1] < minTime) minTime = match[1];
           if (match[2] > maxTime) maxTime = match[2];
+        } else if (currentTask) {
+          // Append continuation lines to the current task
+          const separator = currentTask.task ? ' ' : '';
+          currentTask.task += separator + trimmedLine;
         }
       }
 
