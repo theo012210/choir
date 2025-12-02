@@ -32,6 +32,7 @@ function App() {
     status: 'Planned',
     visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER]
   });
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('choir_dark_mode');
     return savedMode ? JSON.parse(savedMode) : false;
@@ -129,8 +130,10 @@ function App() {
   }
 
   const visiblePlans = plans.filter(plan => currentRole === ROLES.ADMIN || plan.visibleTo.includes(currentRole));
-  const donePlans = visiblePlans.filter(plan => plan.status === 'Done');
-  const upcomingPlans = visiblePlans.filter(plan => plan.status === 'Planned');
+  
+  const filteredPlans = visiblePlans.filter(plan => plan.date.startsWith(selectedMonth));
+  const donePlans = filteredPlans.filter(plan => plan.status === 'Done');
+  const upcomingPlans = filteredPlans.filter(plan => plan.status === 'Planned');
 
   const handleSavePlan = async (e) => {
     e.preventDefault();
@@ -660,7 +663,23 @@ function App() {
             </div>
           )}
 
-          <main className="grid md:grid-cols-2 gap-8">
+          <main>
+            <div className="flex justify-end mb-6">
+              <div className="flex items-center gap-3 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-sm">
+                <label htmlFor="month-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Filter by Month:
+                </label>
+                <input
+                  type="month"
+                  id="month-filter"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
             <section>
               <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-emerald-600">
                 <span>✓</span> What We Did
@@ -705,6 +724,7 @@ function App() {
                 )}
               </div>
             </section>
+            </div>
           </main>
           <Calendar plans={visiblePlans} onDateClick={handleDateClick} />
         </>
