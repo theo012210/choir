@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS reflections (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL UNIQUE,
+  good TEXT,
+  bad TEXT,
+  updatedBy TEXT,
+  updatedAt TEXT
+);

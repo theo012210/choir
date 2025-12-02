@@ -14,6 +14,9 @@ export default function TaskCompletion({ plan, onBack, onUpdatePlan }) {
         const trimmedLine = line.trim();
         if (!trimmedLine) return;
 
+        // Ignore "Last edited by" line
+        if (trimmedLine.startsWith('Last edited by:')) return;
+
         // Match time pattern: HH:MM-HH:MM followed by optional separator and description
         const match = line.match(/^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})(?::|\s)?\s*(.*)$/);
         

@@ -3,6 +3,7 @@ import { ROLES, PLANS } from './data/mockData';
 import Auth from './components/Auth';
 import SessionPlanner from './components/SessionPlanner';
 import TaskCompletion from './components/TaskCompletion';
+import DailyReflection from './components/DailyReflection';
 import AdminPortal from './components/AdminPortal';
 import './App.css';
 
@@ -16,6 +17,8 @@ function App() {
   const [sessionSlots, setSessionSlots] = useState({}); // Store slots by date
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isReflectionDateOpen, setIsReflectionDateOpen] = useState(false);
+  const [reflectionDate, setReflectionDate] = useState(new Date().toISOString().split('T')[0]);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -53,13 +56,13 @@ function App() {
     fetchPlans();
   }, []);
 
-  // Auto-sync plans every second when user is logged in
+  // Auto-sync plans every 5 seconds when user is logged in
   useEffect(() => {
     if (!user) return;
 
     const interval = setInterval(() => {
       fetchPlans();
-    }, 1000); // Fetch every 1 second
+    }, 5000); // Fetch every 5 seconds
 
     return () => clearInterval(interval);
   }, [user]);
@@ -380,6 +383,18 @@ function App() {
     }
   };
 
+  const handleOpenReflection = () => {
+    setReflectionDate(new Date().toISOString().split('T')[0]);
+    setIsReflectionDateOpen(true);
+  };
+
+  const handleGoToReflection = (e) => {
+    e.preventDefault();
+    setIsReflectionDateOpen(false);
+    setSelectedDate(reflectionDate);
+    setCurrentView('dailyReflection');
+  };
+
   const handleBackToDashboard = (slots) => {
     if (selectedDate && slots) {
       setSessionSlots(prev => ({ ...prev, [selectedDate]: slots }));
@@ -409,6 +424,14 @@ function App() {
               className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
             >
               Admin Portal
+            </button>
+          )}
+          {[ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.ADMIN].includes(currentRole) && (
+            <button
+              onClick={handleOpenReflection}
+              className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition"
+            >
+              Daily Reflection
             </button>
           )}
           <button 
@@ -490,6 +513,41 @@ function App() {
         </div>
       )}
 
+      {isReflectionDateOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md transition-colors duration-200">
+            <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Select Date for Reflection</h2>
+            <form onSubmit={handleGoToReflection} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                <input
+                  type="date"
+                  required
+                  value={reflectionDate}
+                  onChange={e => setReflectionDate(e.target.value)}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="submit"
+                  className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                >
+                  Go to Reflection
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsReflectionDateOpen(false)}
+                  className="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {currentView === 'planner' ? (
         <SessionPlanner 
           date={selectedDate} 
@@ -506,6 +564,15 @@ function App() {
             setSelectedPlan(null);
           }}
           onUpdatePlan={handleUpdatePlan}
+        />
+      ) : currentView === 'dailyReflection' ? (
+        <DailyReflection 
+          date={selectedDate}
+          user={user}
+          onBack={() => {
+            setCurrentView('dashboard');
+            setSelectedDate(null);
+          }}
         />
       ) : currentView === 'admin' ? (
         <AdminPortal onBack={() => setCurrentView('dashboard')} />
