@@ -33,6 +33,7 @@ function App() {
     visibleTo: [ROLES.TEACHER, ROLES.LEADER, ROLES.PART_LEADER, ROLES.MEMBER]
   });
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [lastSyncTime, setLastSyncTime] = useState(null);
   const [darkMode, setDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('choir_dark_mode');
     return savedMode ? JSON.parse(savedMode) : false;
@@ -74,6 +75,7 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         setPlans(data);
+        setLastSyncTime(new Date());
       }
     } catch (error) {
       console.error('Failed to fetch plans:', error);
@@ -406,14 +408,29 @@ function App() {
     setSelectedDate(null);
   };
 
+  const formatSyncTime = (date) => {
+    if (!date) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-8 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-200">
       <header className="mb-10 flex flex-col md:flex-row justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md transition-colors duration-200">
         <div>
           <h1 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">Magpie Choir Teaching Plan</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Welcome, {user.name} ({user.role})</p>
+          {lastSyncTime && (
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Last Synchronised at {formatSyncTime(lastSyncTime)}
+            </p>
+          )}
         </div>
-        <div className="mt-4 md:mt-0 flex items-center gap-3">
+        <div className="mt-4 md:mt-0 flex flex-wrap justify-center items-center gap-3">
           <button
             onClick={() => setDarkMode(!darkMode)}
             className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
